@@ -159,9 +159,60 @@ def nsignal():
     c.Update()
     return c, hnsigs, hq
 
+def outsignal():
+
+    hs_new = [ TH1F(str(i) + 'new','',20,0,20) for i in range(3)]
+    hs_old = [ TH1F(str(i) + 'old','',20,0,20) for i in range(3)]
+
+    for e in range(nevts):
+        istr = str(e)
+        new_slices = filter( lambda x: x.split('_')[0] == istr, ks_new )
+        old_slices = filter( lambda x: x.split('_')[0] == istr, ks_old )
+        for sl in new_slices:
+            h = new.Get( sl )
+            x0, y0 = h.GetMean(1), h.GetMean(2)
+            for i in range( 1, h.GetNbinsX() + 1 ):
+                for j in range( 1, h.GetNbinsY() + 1 ):
+                    x = h.GetXaxis().GetBinCenter(i)
+                    y = h.GetYaxis().GetBinCenter(j)
+                    r2 = (x-x0)**2 + (y-y0)**2
+                    if 400. <= r2 < 2500.: # 2cm
+                        rbin = int( ( r2**0.5 - 20. ) // 10 )
+                        q  = h.GetBinContent(i,j)
+                        hs_new[rbin].Fill( q )
+
+        for sl in old_slices:
+            h = old.Get( sl )
+            x0, y0 = h.GetMean(1), h.GetMean(2)
+            for i in range( 1, h.GetNbinsX() + 1 ):
+                for j in range( 1, h.GetNbinsY() + 1 ):
+                    x = h.GetXaxis().GetBinCenter(i)
+                    y = h.GetYaxis().GetBinCenter(j)
+                    r2 = (x-x0)**2 + (y-y0)**2
+                    if 400. <= r2 < 2500.: # 2cm
+                        rbin = int( ( r2**0.5 - 20. ) // 10 )
+                        q  = h.GetBinContent(i,j)
+                        hs_old[rbin].Fill( q )
+
+    c = TCanvas()
+    c.Divide(3,2)
+    for i in range(3):
+        c.cd(i+1)
+        hs_new[i].Draw()
+    for i in range(3):
+        c.cd(i+4)
+        hs_old[i].Draw()
+
+    c.Modified()
+    c.Update()
+    return c, hs_old, hs_new
+
+
+
 #a = evt_charge_comparison()
 #b = full_charge_comparison()
 #c = check_missing()
-d = nslices()
+#d = nslices()
 #e = nsignal()
+f = outsignal()
 raw_input()
